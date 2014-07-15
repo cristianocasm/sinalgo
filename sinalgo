@@ -1,1 +1,1 @@
-java -cp binaries/bin sinalgo.Run $*
+java -cp bin sinalgo.Run $*

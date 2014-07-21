@@ -93,13 +93,13 @@ public class SimpleNode extends Node {
 			}
 		}
 	}
-	
-	@NodePopupMethod(menuText="Construir Arvore de Roteamento")
-	public void construirRoteamento(){
-	this.proximoNoAteEstacaoBase = this;
-	NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
-	NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
-	timer.startRelative(1, this);
+
+	@NodePopupMethod(menuText = "Construir Arvore de Roteamento")
+	public void construirRoteamento() {
+		this.proximoNoAteEstacaoBase = this;
+		NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
+		NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
+		timer.startRelative(1, this);
 	}
 
 	@Override

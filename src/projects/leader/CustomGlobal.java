@@ -105,20 +105,20 @@ public class CustomGlobal extends AbstractCustomGlobal {
 	// -----------------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------------
 	
-	@Override
-	public void postRound() {
-		// 'Global.currentTime == 1' indica que a rede acaba de ser iniciada
-		// e, consequentemente, ainda não há um líder
-		if(Global.currentTime == 1) { setLeader(); }
-	}
-	
-	private void setLeader(){
-		SimpleNode leader = null;
-		
-		for(Node n : Runtime.nodes) {
-			if(leader == null || leader.ID < n.ID) { leader = (SimpleNode) n; }
-		}
-		
-		leader.setAsNetworkLeader();
-	}
+//	@Override
+//	public void postRound() {
+//		// 'Global.currentTime == 1' indica que a rede acaba de ser iniciada
+//		// e, consequentemente, ainda não há um líder
+//		if(Global.currentTime == 1) { setLeader(); }
+//	}
+//	
+//	private void setLeader(){
+//		SimpleNode leader = null;
+//		
+//		for(Node n : Runtime.nodes) {
+//			if(leader == null || leader.ID < n.ID) { leader = (SimpleNode) n; }
+//		}
+//		
+//		leader.setAsNetworkLeader();
+//	}
 }

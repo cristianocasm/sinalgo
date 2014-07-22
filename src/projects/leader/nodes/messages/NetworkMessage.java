@@ -36,41 +36,28 @@
  */
 package projects.leader.nodes.messages;
 
-import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Message;
 
 public class NetworkMessage extends Message {
-	// Identificador da mensagem
-	public Integer sequenceID;
-	// Tempo de vida do Pacote
-	public Integer ttl;
-	// Nó de destino
-	public Node destino;
-	// Nó de origem
-	public Node origem;
-	// No que vai reencaminhar a mensagem
-	public Node forwardingHop;
-	// Número de saltos até o destino
-	public Integer saltosAteDestino;
-	// Tipo do Pacote. 0 para Estabelecimento de Rotas e 1 para pacotes de dados
-	public Integer tipoMsg = 0;
+
+	/**
+	 * Tipo do Pacote.
+	 * 
+	 * 0 - 'ELECTION'
+	 * 1 - 'STOP'
+	 * 2 - 'PING'
+	 * 3 - 'PONG'
+	 * 
+	 * */
+	public Integer tipoMsg;
 
 	// Construtor da Classe
-	public NetworkMessage(Integer seqID, Node origem, Node destino,
-			Node forwardingHop, Integer tipo) {
-		this.sequenceID = seqID;
-		this.origem = origem;
-		this.destino = destino;
-		this.forwardingHop = forwardingHop;
+	public NetworkMessage(int tipo) {
 		this.tipoMsg = tipo;
 	}
 
 	@Override
 	public Message clone() {
-		NetworkMessage msg = new NetworkMessage(this.sequenceID, this.origem,
-				this.destino, this.forwardingHop, this.tipoMsg);
-		msg.ttl = this.ttl;
-		msg.saltosAteDestino = saltosAteDestino;
-		return msg;
+		return this;
 	}
 }

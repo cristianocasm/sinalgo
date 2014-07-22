@@ -37,27 +37,29 @@
 package projects.leader.nodes.nodeImplementations;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
-import projects.leader.CustomGlobal;
 import projects.leader.nodes.messages.NetworkMessage;
+import projects.leader.nodes.timers.NetworkMessageTimer;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
+import sinalgo.runtime.Runtime;
 
 /**
  * The Node of the sample project.
  */
 public class SimpleNode extends Node {
 	
-	private boolean isLeader = false;
-	private SimpleNode networkLeader;
+	// private boolean isLeader = false;
+	private SimpleNode networkLeader = null;
 	
 	/**
 	 * Seta o presente nó como o líder da rede
 	 * */
 	public void setAsNetworkLeader(){
-		this.isLeader = true;
+		// this.isLeader = true;
 		this.networkLeader = this;
 		this.setColor(Color.RED);
 		this.proclaimLeadership();
@@ -74,7 +76,7 @@ public class SimpleNode extends Node {
 	 * Armazena a informação de quem é o líder da rede
 	 * */
 	private void setLeader(SimpleNode leader){
-		this.isLeader = false;
+		// this.isLeader = false;
 		this.networkLeader = leader; 
 	}
 	
@@ -82,13 +84,49 @@ public class SimpleNode extends Node {
 	 * Inicia eleição para definir o líder da rede
 	 * */
 	private void startLeaderElection(){
+		ArrayList<SimpleNode> nbhs = this.getHigherIDNeighborhoods();
+		this.fireLeaderElectionMsg(nbhs);
+		
+		
 		// Envia mensagem para nós com ID superiores
 		// Se não houver resposta dentro de tempo hábil, chama proclaimLeadership
 		// Caso contrário, desiste
 	}
 	
+	private ArrayList<SimpleNode> getHigherIDNeighborhoods(){
+		ArrayList<SimpleNode> neighborhoods = new ArrayList<SimpleNode>();
+		
+		for(Node n : Runtime.nodes) {
+			if(n.ID > this.ID) { neighborhoods.add((SimpleNode) n); }
+		}
+		
+		return neighborhoods;
+	}
+	
+	private void fireLeaderElectionMsg(ArrayList<SimpleNode> neighborhoods){
+		for(SimpleNode sn : neighborhoods){	this.sendMsg(sn); }
+	}
+	
+	/**
+	 * TODO verificar como funciona o envio de mensagens
+	 * TODO adicionar parâmetro "mensagem" com o conteúdo da mensagem
+	 * */	
+	private void sendMsg(SimpleNode sn){
+		NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
+		NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
+		timer.startRelative(1, this);
+	}
+	
+	/**
+	 * TODO verificar como checar retorno
+	 * */
 	@NodePopupMethod(menuText = "Ping Leader")
 	public void pingLeader() {
+		if(this.networkLeader == null)
+			startLeaderElection();
+		else
+			this.sendMsg(this.networkLeader);
+
 		// Envia mensagem para líder utilizando this.NetworkLeader
 		// Caso retorno seja dado, envia para output "Leader (#ID): Pong "
 		// Caso contrário chama método "startLeaderElection"

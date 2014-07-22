@@ -36,8 +36,10 @@
  */
 package projects.leader.nodes.nodeImplementations;
 
+import java.awt.Color;
+
+import projects.leader.CustomGlobal;
 import projects.leader.nodes.messages.NetworkMessage;
-import projects.leader.nodes.timers.NetworkMessageTimer;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
@@ -47,12 +49,65 @@ import sinalgo.nodes.messages.Message;
  * The Node of the sample project.
  */
 public class SimpleNode extends Node {
+	
+	private boolean isLeader = false;
+	private SimpleNode networkLeader;
+	
+	/**
+	 * Seta o presente nó como o líder da rede
+	 * */
+	public void setAsNetworkLeader(){
+		this.isLeader = true;
+		this.networkLeader = this;
+		this.setColor(Color.RED);
+		this.proclaimLeadership();
+	}
+	
+	/**
+	 * Proclama o presente nó como leader da rede
+	 * */
+	private void proclaimLeadership(){
+		// chama método de envio de mensagem passando this como mensagem
+	}
+
+	/**
+	 * Armazena a informação de quem é o líder da rede
+	 * */
+	private void setLeader(SimpleNode leader){
+		this.isLeader = false;
+		this.networkLeader = leader; 
+	}
+	
+	/**
+	 * Inicia eleição para definir o líder da rede
+	 * */
+	private void startLeaderElection(){
+		// Envia mensagem para nós com ID superiores
+		// Se não houver resposta dentro de tempo hábil, chama proclaimLeadership
+		// Caso contrário, desiste
+	}
+	
+	@NodePopupMethod(menuText = "Ping Leader")
+	public void pingLeader() {
+		// Envia mensagem para líder utilizando this.NetworkLeader
+		// Caso retorno seja dado, envia para output "Leader (#ID): Pong "
+		// Caso contrário chama método "startLeaderElection"
+	}
+
 
 	// Armazenar o nó que sera usado para alcançar a Estacao-Base
 	private Node proximoNoAteEstacaoBase;
 	// Armazena o número de sequencia da última mensagem recebida
 	private Integer sequenceNumber = 0;
 
+	
+	/**
+	 * This method is invoked after all the Messages are received. Overwrite it to specify what to do 
+	 * with incoming messages.
+	 * @param inbox a instance of a iterator-like class Inbox. It is used to traverse the incoming
+	 * packets and to get information about them. 
+	 * @see Node#step() for the order of calling the methods.
+	 */
 	@Override
 	public void handleMessages(Inbox inbox) {
 		while (inbox.hasNext()) {
@@ -94,38 +149,75 @@ public class SimpleNode extends Node {
 		}
 	}
 
-	@NodePopupMethod(menuText = "Construir Arvore de Roteamento")
-	public void construirRoteamento() {
-		this.proximoNoAteEstacaoBase = this;
-		NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
-		NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
-		timer.startRelative(1, this);
-	}
+//	@NodePopupMethod(menuText = "Construir Arvore de Roteamento")
+//	public void construirRoteamento() {
+//		this.proximoNoAteEstacaoBase = this;
+//		NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
+//		NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
+//		timer.startRelative(1, this);
+//	}
+	
+//	@NodePopupMethod(menuText="Set Leader")
+//	public void setLeader(){
+//		this.setColor(Color.red);
+//	}
 
+	/**
+	 * This method is invoked at the beginning of each step. 
+	 * Add actions to this method that this node should perform in every step.
+	 * @see Node#step() for the calling sequence of the node methods.
+	 */
 	@Override
 	public void preStep() {
 		// TODO Auto-generated method stub
 
 	}
 
+	/**
+	 * This method is called exactly once upon creation of this node
+	 * and allows the subclasses to perform some node-specific initialization.
+	 * <p>
+	 * When a set of nodes is generated, this method may be called before all nodes
+	 * are added to the framework. Therefore, this method should not depend on other
+	 * nodes of the framework.
+	 */
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
 
 	}
 
+	/**
+	 * At the beginning of each round, the framework moves all nodes according to their mobility model.
+	 * Then, it iterates over all nodes to update the connections, according to the nodes connectivity model.
+	 * <p>
+	 * This method is called in the step of this node if the set of outgoing connections had changed in 
+	 * this round. I.e. a new edge was added or an edge was removed.
+	 * <p>
+	 * As a result, this method is called nearly always in the very first round, when the network graph
+	 * is determined for the first time.   
+	 */
 	@Override
 	public void neighborhoodChange() {
 		// TODO Auto-generated method stub
 
 	}
 
+	/**
+	 * The node calls this method at the end of its step. 
+	 */
 	@Override
 	public void postStep() {
 		// TODO Auto-generated method stub
 
 	}
 
+	/**
+	 * This method checks if the configuration meets the specification of the node. This 
+	 * function is called exactly once just after the initialisazion of a node but before 
+	 * the first usage.
+	 * @throws WrongConfigurationException if the requirements are not met. 
+	 */
 	@Override
 	public void checkRequirements() throws WrongConfigurationException {
 		// TODO Auto-generated method stub

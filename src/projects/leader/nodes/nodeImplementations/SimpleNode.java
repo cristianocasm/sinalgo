@@ -66,6 +66,7 @@ public class SimpleNode extends Node {
 	public void setAsNetworkLeader() {
 		// this.isLeader = true;
 		this.networkLeader = this;
+		// this.highlight(true);
 		this.setColor(Color.RED);
 		this.proclaimLeadership();
 	}
@@ -88,8 +89,8 @@ public class SimpleNode extends Node {
 	 * Inicia eleição para definir o líder da rede
 	 * */
 	private void startLeaderElection() {
-		ArrayList<SimpleNode> nbhs = this.getHigherIDNeighborhoods();
-		this.fireLeaderElectionMsg(nbhs);
+		// ArrayList<SimpleNode> nbhs = this.getHigherIDNeighborhoods();
+		this.fireLeaderElectionMsg();
 
 		// Envia mensagem para nós com ID superiores
 		// Se não houver resposta dentro de tempo hábil, chama
@@ -103,7 +104,7 @@ public class SimpleNode extends Node {
 //	timer.startRelative(1, this);
 //}
 
-	private ArrayList<SimpleNode> getHigherIDNeighborhoods() {
+	public ArrayList<SimpleNode> getHigherIDNeighborhoods() {
 		ArrayList<SimpleNode> neighborhoods = new ArrayList<SimpleNode>();
 
 		for (Node n : Runtime.nodes) {
@@ -115,12 +116,11 @@ public class SimpleNode extends Node {
 		return neighborhoods;
 	}
 
-	private void fireLeaderElectionMsg(ArrayList<SimpleNode> neighborhoods) {
-		for (SimpleNode sn : neighborhoods) {
-			//this.send(new NetworkMessage(ELECTION), sn);
+	private void fireLeaderElectionMsg() {
+		//for (SimpleNode sn : neighborhoods) {
 			NetworkMessageTimer timer = new NetworkMessageTimer(new NetworkMessage(ELECTION));
 			timer.startRelative(1, this);
-		}
+		//}
 	}
 
 	/**

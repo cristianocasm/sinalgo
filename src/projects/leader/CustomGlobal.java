@@ -38,11 +38,7 @@ package projects.leader;
 
 import javax.swing.JOptionPane;
 
-import projects.leader.nodes.nodeImplementations.SimpleNode;
-import sinalgo.nodes.Node;
 import sinalgo.runtime.AbstractCustomGlobal;
-import sinalgo.runtime.Global;
-import sinalgo.runtime.Runtime;
 
 /**
  * This class holds customized global state and methods for the framework. The
@@ -99,26 +95,4 @@ public class CustomGlobal extends AbstractCustomGlobal {
 		JOptionPane.showMessageDialog(null, "You Pressed the 'GO' button.");
 	}
 
-	// -----------------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------------
-	// Início dos métodos inseridos por Cristiano A.
-	// -----------------------------------------------------------------------------------
-	// -----------------------------------------------------------------------------------
-	
-//	@Override
-//	public void postRound() {
-//		// 'Global.currentTime == 1' indica que a rede acaba de ser iniciada
-//		// e, consequentemente, ainda não há um líder
-//		if(Global.currentTime == 1) { setLeader(); }
-//	}
-//	
-//	private void setLeader(){
-//		SimpleNode leader = null;
-//		
-//		for(Node n : Runtime.nodes) {
-//			if(leader == null || leader.ID < n.ID) { leader = (SimpleNode) n; }
-//		}
-//		
-//		leader.setAsNetworkLeader();
-//	}
 }

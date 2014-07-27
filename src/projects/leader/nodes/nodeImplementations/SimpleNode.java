@@ -45,7 +45,9 @@ import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
+import sinalgo.runtime.Global;
 import sinalgo.runtime.Runtime;
+import sinalgo.tools.Tools;
 
 /**
  * The Node of the sample project.
@@ -59,6 +61,8 @@ public class SimpleNode extends Node {
 
 	// private boolean isLeader = false;
 	private SimpleNode networkLeader = null;
+	private boolean runningLeaderElection = false;
+	private double timeOfLastMsgSent = 0; 
 
 	/**
 	 * Seta o presente nó como o líder da rede
@@ -89,7 +93,7 @@ public class SimpleNode extends Node {
 	 * Inicia eleição para definir o líder da rede
 	 * */
 	private void startLeaderElection() {
-		// ArrayList<SimpleNode> nbhs = this.getHigherIDNeighborhoods();
+		this.runningLeaderElection = true;
 		this.fireLeaderElectionMsg();
 
 		// Envia mensagem para nós com ID superiores
@@ -98,12 +102,6 @@ public class SimpleNode extends Node {
 		// Caso contrário, desiste
 	}
 	
-//	private void sendMsg(SimpleNode sn) {
-//	NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
-//	NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
-//	timer.startRelative(1, this);
-//}
-
 	public ArrayList<SimpleNode> getHigherIDNeighborhoods() {
 		ArrayList<SimpleNode> neighborhoods = new ArrayList<SimpleNode>();
 
@@ -120,18 +118,12 @@ public class SimpleNode extends Node {
 		//for (SimpleNode sn : neighborhoods) {
 			NetworkMessageTimer timer = new NetworkMessageTimer(new NetworkMessage(ELECTION));
 			timer.startRelative(1, this);
+			
+			this.timeOfLastMsgSent = Global.currentTime;
+			Tools.appendToOutput("Node " + this.ID + " has just started leader election." + "\n\n");
 		//}
 	}
 
-	/**
-	 * TODO verificar como funciona o envio de mensagens TODO adicionar
-	 * parâmetro "mensagem" com o conteúdo da mensagem
-	 * */
-//	private void sendMsg(SimpleNode sn) {
-//		NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
-//		NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
-//		timer.startRelative(1, this);
-//	}
 
 	/**
 	 * TODO verificar como checar retorno
@@ -173,16 +165,41 @@ public class SimpleNode extends Node {
 				
 				switch(((NetworkMessage) message).tipoMsg){
 					case 0: // ELECTION
-						if(this.ID > sender.ID)
-							this.send(new NetworkMessage(STOP), sender);
+						this.send(new NetworkMessage(STOP), sender);
+						this.startLeaderElection();
+						this.runningLeaderElection = true;
+						this.timeOfLastMsgSent = Global.currentTime;
+						Tools.appendToOutput("Node " +
+								this.ID +
+								" has just received leader election message from " +
+								sender.ID +
+								"\n\n");
+						
 						break;
 					case 1: // STOP TODO
+						this.runningLeaderElection = false;
+						this.timeOfLastMsgSent = 0;
+						Tools.appendToOutput("Node " +
+								this.ID +
+								" has just received STOP message from " +
+								sender.ID +
+								"\n\n");
 						break;
 					case 2: // PING
 						if(this.ID == this.networkLeader.ID)
 							this.send(new NetworkMessage(PONG), sender);
+							Tools.appendToOutput("Leader Node (" +
+									this.ID +
+									") has just received PING message." +
+									"\n\n");
 						break;
 					case 3: // PONG TODO
+						Tools.appendToOutput("Node " +
+								this.ID +
+								" has just received PONG message from Network Leader (" +
+								sender.ID +
+								")." +
+								"\n\n");
 						break;
 				}
 				
@@ -243,8 +260,15 @@ public class SimpleNode extends Node {
 	 */
 	@Override
 	public void preStep() {
-		// TODO Auto-generated method stub
-
+		if(this.runningLeaderElection){
+			// Imagine a leader election starting at time 1
+			// time 2 - leader election message is sent to higher ID nodes
+			// time 3 - higher ID nodes answer with STOP message
+			// time 4 - original sender receives messages
+			if( (Global.currentTime - this.timeOfLastMsgSent) > 4){
+				this.setAsNetworkLeader();
+			}
+		}
 	}
 
 	/**

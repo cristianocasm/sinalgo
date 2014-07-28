@@ -58,19 +58,18 @@ public class SimpleNode extends Node {
 	private final int STOP = 1;
 	private final int PING = 2;
 	private final int PONG = 3;
+	private final int ANNOUNCE_LEADER = 4;
 
-	// private boolean isLeader = false;
-	private SimpleNode networkLeader = null;
+	private Node networkLeader = null;
 	private boolean runningLeaderElection = false;
+	private boolean waitingAnswer = false;
 	private double timeOfLastMsgSent = 0; 
 
 	/**
 	 * Seta o presente nó como o líder da rede
 	 * */
 	public void setAsNetworkLeader() {
-		// this.isLeader = true;
 		this.networkLeader = this;
-		// this.highlight(true);
 		this.setColor(Color.RED);
 		this.proclaimLeadership();
 	}
@@ -79,13 +78,15 @@ public class SimpleNode extends Node {
 	 * Proclama o presente nó como leader da rede
 	 * */
 	private void proclaimLeadership() {
-		// chama método de envio de mensagem passando this como mensagem
+		this.broadcast(new NetworkMessage(this.ANNOUNCE_LEADER));
+		this.runningLeaderElection = false;
+		this.waitingAnswer = false;
 	}
 
 	/**
 	 * Armazena a informação de quem é o líder da rede
 	 * */
-	private void setLeader(SimpleNode leader) {
+	private void setNetworkLeader(Node leader) {
 		this.networkLeader = leader;
 	}
 
@@ -94,12 +95,8 @@ public class SimpleNode extends Node {
 	 * */
 	private void startLeaderElection() {
 		this.runningLeaderElection = true;
+		this.waitingAnswer = true;
 		this.fireLeaderElectionMsg();
-
-		// Envia mensagem para nós com ID superiores
-		// Se não houver resposta dentro de tempo hábil, chama
-		// proclaimLeadership
-		// Caso contrário, desiste
 	}
 	
 	public ArrayList<SimpleNode> getHigherIDNeighborhoods() {
@@ -115,13 +112,11 @@ public class SimpleNode extends Node {
 	}
 
 	private void fireLeaderElectionMsg() {
-		//for (SimpleNode sn : neighborhoods) {
-			NetworkMessageTimer timer = new NetworkMessageTimer(new NetworkMessage(ELECTION));
-			timer.startRelative(1, this);
-			
-			this.timeOfLastMsgSent = Global.currentTime;
-			Tools.appendToOutput("Node " + this.ID + " has just started leader election." + "\n\n");
-		//}
+		NetworkMessageTimer timer = new NetworkMessageTimer(new NetworkMessage(ELECTION));
+		timer.startRelative(1, this);
+		
+		this.timeOfLastMsgSent = Global.currentTime;
+		Tools.appendToOutput("Node " + this.ID + " has just started leader election." + "\n\n");
 	}
 
 
@@ -131,19 +126,21 @@ public class SimpleNode extends Node {
 	@NodePopupMethod(menuText = "Ping Leader")
 	public void pingLeader() {
 		if(this.networkLeader == null)
-			startLeaderElection();
+			this.startLeaderElection();
 		else
-			this.send(new NetworkMessage(PING), this.networkLeader);
-
-		// Envia mensagem para líder utilizando this.NetworkLeader
-		// Caso retorno seja dado, envia para output "Leader (#ID): Pong "
-		// Caso contrário chama método "startLeaderElection"
+			this.sendPingMsgToLeader();
 	}
-
-	// Armazenar o nó que sera usado para alcançar a Estacao-Base
-	private Node proximoNoAteEstacaoBase;
-	// Armazena o número de sequencia da última mensagem recebida
-	private Integer sequenceNumber = 0;
+	
+	private void sendPingMsgToLeader(){
+		NetworkMessageTimer timer = new NetworkMessageTimer(new NetworkMessage(this.PING));
+		timer.startRelative(1, this);
+		this.timeOfLastMsgSent = Global.currentTime;
+		this.waitingAnswer = true;
+	}
+	
+	public Node getNetworkLeader(){
+		return this.networkLeader;
+	}
 
 	/**
 	 * This method is invoked after all the Messages are received. Overwrite it
@@ -165,92 +162,56 @@ public class SimpleNode extends Node {
 				
 				switch(((NetworkMessage) message).tipoMsg){
 					case 0: // ELECTION
-						this.send(new NetworkMessage(STOP), sender);
+						this.send(new NetworkMessage(this.STOP), sender);
 						this.startLeaderElection();
 						this.runningLeaderElection = true;
+						this.waitingAnswer = true;
 						this.timeOfLastMsgSent = Global.currentTime;
-						Tools.appendToOutput("Node " +
+						Tools.appendToOutput(sender.ID +
+								" ~> " +
 								this.ID +
-								" has just received leader election message from " +
-								sender.ID +
+								": LEADER ELECTION" +
 								"\n\n");
 						
 						break;
 					case 1: // STOP TODO
 						this.runningLeaderElection = false;
+						this.waitingAnswer = false;
 						this.timeOfLastMsgSent = 0;
-						Tools.appendToOutput("Node " +
+						Tools.appendToOutput(sender.ID +
+								" ~> " +
 								this.ID +
-								" has just received STOP message from " +
-								sender.ID +
+								": STOP" +
 								"\n\n");
 						break;
 					case 2: // PING
 						if(this.ID == this.networkLeader.ID)
-							this.send(new NetworkMessage(PONG), sender);
-							Tools.appendToOutput("Leader Node (" +
+							this.send(new NetworkMessage(this.PONG), sender);
+							Tools.appendToOutput(sender.ID +
+									" ~> " +
 									this.ID +
-									") has just received PING message." +
+									": PING" +
 									"\n\n");
 						break;
 					case 3: // PONG TODO
-						Tools.appendToOutput("Node " +
+						this.waitingAnswer = false;
+						Tools.appendToOutput(sender.ID +
+								" ~> " +
 								this.ID +
-								" has just received PONG message from Network Leader (" +
-								sender.ID +
-								")." +
+								": PONG" +
 								"\n\n");
 						break;
+					case 4:
+						Tools.appendToOutput(sender.ID +
+								" ~> " +
+								this.ID +
+								": SET LEADER" +
+								"\n\n");
+						this.setNetworkLeader(sender);
 				}
-				
-//				Boolean encaminhar = Boolean.TRUE;
-//				NetworkMessage wsnMessage = (NetworkMessage) message;
-//				if (wsnMessage.forwardingHop.equals(this)) { // A mensagem
-//																// voltou. O no
-//																// deve
-//																// descarta-la
-//					encaminhar = Boolean.FALSE;
-//				} else if (wsnMessage.tipoMsg == 0) { // A mensagem é um flood.
-//														// Devemos atualizar a
-//														// rota
-//					if (proximoNoAteEstacaoBase == null) {
-//						proximoNoAteEstacaoBase = inbox.getSender();
-//						sequenceNumber = wsnMessage.sequenceID;
-//					} else if (sequenceNumber < wsnMessage.sequenceID) {
-//						// Recurso simples para evitar loop.
-//						// Exemplo: Noh A transmite em brodcast. Noh B recebe a
-//						// msg e retransmite em broadcast.
-//						// Consequentemente, noh A irá receber a msg. Sem esse
-//						// condicional, noh A iria retransmitir novamente,
-//						// gerando um loop
-//						sequenceNumber = wsnMessage.sequenceID;
-//					} else {
-//						encaminhar = Boolean.FALSE;
-//					}
-//				}
-//				if (encaminhar) {
-//					// Devemos alterar o campo forwardingHop(da
-//					// mensagem) para armazenar o
-//					// noh que vai encaminhar a mensagem.
-//					wsnMessage.forwardingHop = this;
-//					broadcast(wsnMessage);
-//				}
 			}
 		}
 	}
-
-	// @NodePopupMethod(menuText = "Construir Arvore de Roteamento")
-	// public void construirRoteamento() {
-	// this.proximoNoAteEstacaoBase = this;
-	// NetworkMessage wsnMessage = new NetworkMessage(1, this, null, this, 0);
-	// NetworkMessageTimer timer = new NetworkMessageTimer(wsnMessage);
-	// timer.startRelative(1, this);
-	// }
-
-	// @NodePopupMethod(menuText="Set Leader")
-	// public void setLeader(){
-	// this.setColor(Color.red);
-	// }
 
 	/**
 	 * This method is invoked at the beginning of each step. Add actions to this
@@ -260,13 +221,18 @@ public class SimpleNode extends Node {
 	 */
 	@Override
 	public void preStep() {
-		if(this.runningLeaderElection){
+		if(this.waitingAnswer){
 			// Imagine a leader election starting at time 1
 			// time 2 - leader election message is sent to higher ID nodes
 			// time 3 - higher ID nodes answer with STOP message
 			// time 4 - original sender receives messages
-			if( (Global.currentTime - this.timeOfLastMsgSent) > 4){
-				this.setAsNetworkLeader();
+			if(this.runningLeaderElection){
+				if( (Global.currentTime - this.timeOfLastMsgSent) > 3)
+					this.setAsNetworkLeader();
+			}
+			
+			else if((Global.currentTime - this.timeOfLastMsgSent) > 4){
+				this.startLeaderElection();
 			}
 		}
 	}

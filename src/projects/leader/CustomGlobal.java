@@ -39,6 +39,7 @@ package projects.leader;
 import javax.swing.JOptionPane;
 
 import sinalgo.runtime.AbstractCustomGlobal;
+import sinalgo.tools.Tools;
 
 /**
  * This class holds customized global state and methods for the framework. The
@@ -93,6 +94,11 @@ public class CustomGlobal extends AbstractCustomGlobal {
 	@AbstractCustomGlobal.CustomButton(buttonText = "GO", toolTipText = "A sample button")
 	public void sampleButton() {
 		JOptionPane.showMessageDialog(null, "You Pressed the 'GO' button.");
+	}
+	
+	@Override
+	public void preRound() {
+		Tools.clearOutput();
 	}
 
 }

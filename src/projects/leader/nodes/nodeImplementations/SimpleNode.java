@@ -162,6 +162,11 @@ public class SimpleNode extends Node {
 				
 				switch(((NetworkMessage) message).tipoMsg){
 					case 0: // ELECTION
+						Tools.appendToOutput(sender.ID +
+								" ~> " +
+								this.ID +
+								": LEADER ELECTION" +
+								"\n\n");
 						this.send(new NetworkMessage(this.STOP), sender);
 						if(!this.runningLeaderElection){
 							this.startLeaderElection();
@@ -169,14 +174,9 @@ public class SimpleNode extends Node {
 							this.waitingAnswer = true;
 							this.timeOfLastMsgSent = Global.currentTime;
 						}
-						Tools.appendToOutput(sender.ID +
-								" ~> " +
-								this.ID +
-								": LEADER ELECTION" +
-								"\n\n");
 						
 						break;
-					case 1: // STOP TODO
+					case 1: // STOP
 						this.runningLeaderElection = false;
 						this.waitingAnswer = false;
 						this.timeOfLastMsgSent = 0;
@@ -195,7 +195,7 @@ public class SimpleNode extends Node {
 									": PING" +
 									"\n\n");
 						break;
-					case 3: // PONG TODO
+					case 3: // PONG
 						this.waitingAnswer = false;
 						Tools.appendToOutput(sender.ID +
 								" ~> " +
@@ -227,13 +227,17 @@ public class SimpleNode extends Node {
 			// Imagine a leader election starting at time 1
 			// time 2 - leader election message is sent to higher ID nodes
 			// time 3 - higher ID nodes answer with STOP message
-			// time 4 - original sender receives messages
+			// time 4 - original sender receives message
 			if(this.runningLeaderElection){
 				if( (Global.currentTime - this.timeOfLastMsgSent) > 3)
 					this.setAsNetworkLeader();
 			}
 			
-			else if((Global.currentTime - this.timeOfLastMsgSent) > 4){
+			// Imagine a PING message being sent at time 1
+			// time 2 - ping message is sent
+			// time 3 - leader receives message and Answer
+			// time 4 - original sender receives message
+			else if((Global.currentTime - this.timeOfLastMsgSent) > 3){
 				this.startLeaderElection();
 			}
 		}

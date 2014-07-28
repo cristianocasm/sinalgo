@@ -163,10 +163,12 @@ public class SimpleNode extends Node {
 				switch(((NetworkMessage) message).tipoMsg){
 					case 0: // ELECTION
 						this.send(new NetworkMessage(this.STOP), sender);
-						this.startLeaderElection();
-						this.runningLeaderElection = true;
-						this.waitingAnswer = true;
-						this.timeOfLastMsgSent = Global.currentTime;
+						if(!this.runningLeaderElection){
+							this.startLeaderElection();
+							this.runningLeaderElection = true;
+							this.waitingAnswer = true;
+							this.timeOfLastMsgSent = Global.currentTime;
+						}
 						Tools.appendToOutput(sender.ID +
 								" ~> " +
 								this.ID +
